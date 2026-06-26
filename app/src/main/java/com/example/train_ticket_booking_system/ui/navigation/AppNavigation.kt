@@ -98,7 +98,10 @@ fun AppNavigation(repos: Repos) {
             if (user != null && user.paymentPassword.isEmpty()) {
                 needsPaymentPwd = true
             } else {
-                navController.navigate(Routes.HOME)
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.LOGIN) { inclusive = false }
+                    launchSingleTop = true
+                }
             }
         }
     }
