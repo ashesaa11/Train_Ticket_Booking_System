@@ -86,21 +86,19 @@ fun AppNavigation(repos: Repos) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     var userPhone by remember { mutableStateOf("") }
-    var navigateToHome by remember { mutableStateOf(false) }
+    var loginAttempt by remember { mutableStateOf(0) }
     var needsPaymentPwd by remember { mutableStateOf(false) }
     var paymentPwdInput by remember { mutableStateOf("") }
     var paymentPwdConfirm by remember { mutableStateOf("") }
     var pwdError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(navigateToHome) {
-        if (navigateToHome) {
+    LaunchedEffect(loginAttempt) {
+        if (loginAttempt > 0) {
             val user = repos.userRepo.getByPhone(userPhone)
             if (user != null && user.paymentPassword.isEmpty()) {
                 needsPaymentPwd = true
-                navigateToHome = false
             } else {
                 navController.navigate(Routes.HOME)
-                navigateToHome = false
             }
         }
     }
@@ -144,7 +142,7 @@ fun AppNavigation(repos: Repos) {
                         else -> scope.launch {
                             repos.userRepo.setPaymentPassword(userPhone, paymentPwdInput)
                             needsPaymentPwd = false
-                            navController.navigate(Routes.HOME)
+                            loginAttempt++
                         }
                     }
                 }) { Text("确认") }
@@ -157,7 +155,7 @@ fun AppNavigation(repos: Repos) {
         composable(Routes.LOGIN) {
             LoginScreen(onLoginSuccess = { phone ->
                 userPhone = phone
-                navigateToHome = true
+                loginAttempt++
             })
         }
         composable(Routes.HOME) {
