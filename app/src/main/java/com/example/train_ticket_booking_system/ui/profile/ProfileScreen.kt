@@ -13,38 +13,58 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.train_ticket_booking_system.ui.navigation.Repos
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(repos: Repos, navController: NavController) {
+fun ProfileScreen(userPhone: String, repos: Repos, navController: NavController) {
+    val scope = rememberCoroutineScope()
+    var showPwdDialog by remember { mutableStateOf(false) }
+    var oldPwd by remember { mutableStateOf("") }
+    var newPwd by remember { mutableStateOf("") }
+    var confirmPwd by remember { mutableStateOf("") }
+    var pwdError by remember { mutableStateOf<String?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,6 +93,7 @@ fun ProfileScreen(repos: Repos, navController: NavController) {
 
             SectionTitle("常用功能")
             MenuCard(Icons.Default.Person, "常用乘客", "管理您的常用乘车人") { navController.navigate("passenger_manage") }
+            MenuCard(Icons.Default.Lock, "修改支付密码", "更改购票支付的6位密码") { showPwdDialog = true }
             MenuCard(Icons.Default.Edit, "数据管理", "添加站点和车次信息") { navController.navigate("data_manage") }
             MenuCard(Icons.Default.Settings, "AI助手", "智能查询和订票助手") { navController.navigate("ai_chat") }
 
@@ -80,6 +101,50 @@ fun ProfileScreen(repos: Repos, navController: NavController) {
             Text("v1.0 · 火车票购票系统", color = Color(0xFF9AA0A6), fontSize = 12.sp, modifier = Modifier.padding(horizontal = 24.dp))
             Spacer(Modifier.height(16.dp))
         }
+    }
+
+    if (showPwdDialog) {
+        AlertDialog(
+            onDismissRequest = { showPwdDialog = false; oldPwd = ""; newPwd = ""; confirmPwd = ""; pwdError = null },
+            title = { Text("修改支付密码") },
+            text = {
+                Column {
+                    OutlinedTextField(oldPwd, { v -> if (v.length <= 6 && v.all { it.isDigit() }) { oldPwd = v; pwdError = null } },
+                        label = { Text("原支付密码") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(newPwd, { v -> if (v.length <= 6 && v.all { it.isDigit() }) { newPwd = v; pwdError = null } },
+                        label = { Text("新支付密码") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(confirmPwd, { v -> if (v.length <= 6 && v.all { it.isDigit() }) { confirmPwd = v; pwdError = null } },
+                        label = { Text("确认新密码") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                    pwdError?.let { Spacer(Modifier.height(4.dp)); Text(it, color = Color(0xFFEA4335)) }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    when {
+                        oldPwd.length != 6 -> pwdError = "请输入原支付密码"
+                        newPwd.length != 6 -> pwdError = "新密码必须为6位数字"
+                        newPwd != confirmPwd -> pwdError = "两次密码不一致"
+                        else -> scope.launch {
+                            if (repos.userRepo.verifyPaymentPassword(userPhone, oldPwd)) {
+                                repos.userRepo.setPaymentPassword(userPhone, newPwd)
+                                showPwdDialog = false; oldPwd = ""; newPwd = ""; confirmPwd = ""; pwdError = null
+                            } else {
+                                pwdError = "原支付密码错误"
+                            }
+                        }
+                    }
+                }) { Text("确认修改") }
+            },
+            dismissButton = { TextButton(onClick = { showPwdDialog = false; oldPwd = ""; newPwd = ""; confirmPwd = ""; pwdError = null }) { Text("取消") } }
+        )
     }
 }
 

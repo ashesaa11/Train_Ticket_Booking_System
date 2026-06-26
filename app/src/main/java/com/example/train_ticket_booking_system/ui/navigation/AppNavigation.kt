@@ -165,7 +165,7 @@ fun AppNavigation(repos: Repos) {
             OrderListScreen(repos, userPhone, navController)
         }
         composable(Routes.PROFILE) {
-            ProfileScreen(repos, navController)
+            ProfileScreen(userPhone, repos, navController)
         }
 
         // Buy flow
