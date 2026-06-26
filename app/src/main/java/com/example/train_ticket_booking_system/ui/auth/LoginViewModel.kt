@@ -63,7 +63,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun login(phone: String, password: String) {
-        _state.value = _state.value.copy(loading = true, error = null)
+        _state.value = _state.value.copy(loading = true, isLoggedIn = false, error = null)
         viewModelScope.launch {
             try {
                 val user = userRepo.login(phone, password)
@@ -79,7 +79,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun register(phone: String, password: String) {
-        _state.value = _state.value.copy(loading = true, error = null)
+        _state.value = _state.value.copy(loading = true, isLoggedIn = false, error = null)
         viewModelScope.launch {
             try {
                 val user = userRepo.register(phone, password)
