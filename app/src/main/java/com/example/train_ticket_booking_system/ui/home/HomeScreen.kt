@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,10 +75,9 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
     var reachableIds by remember { mutableStateOf<List<Long>>(emptyList()) }
     var showError by remember { mutableStateOf<String?>(null) }
 
-    fun loadStations() {
-        scope.launch { stations = repos.stationRepo.getAll() }
+    LaunchedEffect(Unit) {
+        stations = repos.stationRepo.getAll()
     }
-    if (stations.isEmpty()) loadStations()
 
     fun doSearch() {
         if (fromStation == null || toStation == null) { showError = "请选择出发站和到达站"; return }
