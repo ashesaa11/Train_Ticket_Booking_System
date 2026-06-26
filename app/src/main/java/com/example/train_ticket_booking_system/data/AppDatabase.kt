@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.train_ticket_booking_system.data.dao.ChatHistoryDao
 import com.example.train_ticket_booking_system.data.dao.OrderDao
 import com.example.train_ticket_booking_system.data.dao.PassengerDao
 import com.example.train_ticket_booking_system.data.dao.SeatTypeDao
 import com.example.train_ticket_booking_system.data.dao.StationDao
 import com.example.train_ticket_booking_system.data.dao.TrainDao
 import com.example.train_ticket_booking_system.data.dao.UserDao
+import com.example.train_ticket_booking_system.data.entity.ChatHistory
 import com.example.train_ticket_booking_system.data.entity.OrderItem
 import com.example.train_ticket_booking_system.data.entity.Passenger
 import com.example.train_ticket_booking_system.data.entity.SeatType
@@ -28,9 +30,10 @@ import com.example.train_ticket_booking_system.data.entity.User
         SeatType::class,
         Passenger::class,
         TrainOrder::class,
-        OrderItem::class
+        OrderItem::class,
+        ChatHistory::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun seatTypeDao(): SeatTypeDao
     abstract fun passengerDao(): PassengerDao
     abstract fun orderDao(): OrderDao
+    abstract fun chatHistoryDao(): ChatHistoryDao
 
     companion object {
         @Volatile

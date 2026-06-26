@@ -70,6 +70,17 @@ class FunctionCallHandler(
                     put("required", JSONArray(listOf("order_id")))
                 })
             })
+        },
+        JSONObject().apply {
+            put("type", "function")
+            put("function", JSONObject().apply {
+                put("name", "list_passengers")
+                put("description", "查询当前用户的常用乘客列表，返回姓名、乘客类型、身份证号。购票前必须先调用此接口获取可用乘客。")
+                put("parameters", JSONObject().apply {
+                    put("type", "object")
+                    put("properties", JSONObject())
+                })
+            })
         }
     )
 
@@ -79,6 +90,7 @@ class FunctionCallHandler(
             "search_trains" -> searchTrains(args)
             "book_ticket" -> bookTicket(args)
             "refund_ticket" -> refundTicket(args)
+            "list_passengers" -> listPassengers()
             else -> "未知操作: $name"
         }
     }
@@ -152,5 +164,11 @@ class FunctionCallHandler(
         orderRepo.updateOrderStatus(orderId, "已退票")
 
         return "退票成功！订单ID:$orderId | ${order.trainNumber} | 退票费¥${fee.toInt()} | 退还¥${refundAmount.toInt()}"
+    }
+
+    private suspend fun listPassengers(): String {
+        val list = passengerRepo.getByUser(userPhone)
+        if (list.isEmpty()) return "暂无常用乘客，请在「我的-常用乘客」中添加"
+        return list.joinToString("\n") { "${it.name} | ${it.passengerType} | ${it.idCard}" }
     }
 }
