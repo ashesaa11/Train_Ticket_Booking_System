@@ -93,4 +93,22 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    fun devLogin() {
+        _state.value = _state.value.copy(loading = true, error = null)
+        viewModelScope.launch {
+            try {
+                val devPhone = "13800000000"
+                val devPwd = "123456"
+                var user = userRepo.login(devPhone, devPwd)
+                if (user == null) {
+                    user = userRepo.register(devPhone, devPwd)
+                    userRepo.setPaymentPassword(devPhone, "123456")
+                }
+                _state.value = _state.value.copy(loading = false, isLoggedIn = true, loggedInUser = user, phone = devPhone)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(loading = false, error = "开发者登录失败")
+            }
+        }
+    }
 }

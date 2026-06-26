@@ -183,6 +183,9 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.weight(1f))
+            TextButton(onClick = viewModel::devLogin) {
+                Text("开发者入口", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+            }
             Text("v1.0", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
             Spacer(modifier = Modifier.height(24.dp))
         }
