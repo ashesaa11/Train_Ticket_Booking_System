@@ -1,15 +1,23 @@
 package com.example.train_ticket_booking_system.ui.navigation
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,13 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.train_ticket_booking_system.data.entity.Passenger
@@ -46,6 +55,7 @@ import com.example.train_ticket_booking_system.ui.profile.ProfileScreen
 import com.example.train_ticket_booking_system.ui.train.PassengerSelectScreen
 import com.example.train_ticket_booking_system.ui.train.SeatSelectScreen
 import com.example.train_ticket_booking_system.ui.train.TrainListScreen
+import kotlinx.coroutines.launch
 
 object Routes {
     const val LOGIN = "login"
@@ -74,13 +84,71 @@ data class Repos(
 @Composable
 fun AppNavigation(repos: Repos) {
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
     var userPhone by remember { mutableStateOf("") }
     var navigateToHome by remember { mutableStateOf(false) }
+    var needsPaymentPwd by remember { mutableStateOf(false) }
+    var paymentPwdInput by remember { mutableStateOf("") }
+    var paymentPwdConfirm by remember { mutableStateOf("") }
+    var pwdError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(navigateToHome) {
         if (navigateToHome) {
-            navController.navigate(Routes.HOME)
+            val user = repos.userRepo.getByPhone(userPhone)
+            if (user != null && user.paymentPassword.isEmpty()) {
+                needsPaymentPwd = true
+            } else {
+                navController.navigate(Routes.HOME)
+            }
         }
+    }
+
+    // Payment password setup dialog
+    if (needsPaymentPwd) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("设置支付密码") },
+            text = {
+                Column {
+                    Text("首次使用需设置6位数字支付密码，用于购票支付验证。")
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        paymentPwdInput,
+                        { v -> if (v.length <= 6 && v.all { it.isDigit() }) { paymentPwdInput = v; pwdError = null } },
+                        label = { Text("支付密码（6位数字）") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        paymentPwdConfirm,
+                        { v -> if (v.length <= 6 && v.all { it.isDigit() }) { paymentPwdConfirm = v; pwdError = null } },
+                        label = { Text("确认支付密码") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    pwdError?.let { Spacer(Modifier.height(4.dp)); Text(it, color = Color(0xFFEA4335)) }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    when {
+                        paymentPwdInput.length != 6 -> pwdError = "支付密码必须为6位数字"
+                        paymentPwdInput != paymentPwdConfirm -> pwdError = "两次密码不一致"
+                        else -> scope.launch {
+                            repos.userRepo.setPaymentPassword(userPhone, paymentPwdInput)
+                            needsPaymentPwd = false
+                            navController.navigate(Routes.HOME)
+                        }
+                    }
+                }) { Text("确认") }
+            },
+            dismissButton = {}
+        )
     }
 
     NavHost(navController = navController, startDestination = Routes.LOGIN) {
