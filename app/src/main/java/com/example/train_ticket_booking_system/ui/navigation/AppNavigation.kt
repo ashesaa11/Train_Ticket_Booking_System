@@ -36,6 +36,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.util.Log
 import com.example.train_ticket_booking_system.data.entity.Passenger
 import com.example.train_ticket_booking_system.data.repository.OrderRepository
 import com.example.train_ticket_booking_system.data.repository.PassengerRepository
@@ -86,24 +87,18 @@ fun AppNavigation(repos: Repos) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     var userPhone by remember { mutableStateOf("") }
-    var loginAttempt by remember { mutableStateOf(0) }
     var needsPaymentPwd by remember { mutableStateOf(false) }
     var paymentPwdInput by remember { mutableStateOf("") }
     var paymentPwdConfirm by remember { mutableStateOf("") }
     var pwdError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(loginAttempt) {
-        if (loginAttempt > 0) {
-            val user = repos.userRepo.getByPhone(userPhone)
-            if (user != null && user.paymentPassword.isEmpty()) {
-                needsPaymentPwd = true
-            } else {
-                navController.navigate(Routes.HOME) {
-                    popUpTo(Routes.LOGIN) { inclusive = false }
-                    launchSingleTop = true
-                }
-            }
+    fun doNavigateHome() {
+        Log.d("TTBS_NAV", "doNavigateHome called, current dest: ${navController.currentDestination?.route}")
+        navController.navigate(Routes.HOME) {
+            popUpTo(Routes.LOGIN) { inclusive = false }
+            launchSingleTop = true
         }
+        Log.d("TTBS_NAV", "doNavigateHome done, current dest: ${navController.currentDestination?.route}")
     }
 
     // Payment password setup dialog
@@ -145,7 +140,7 @@ fun AppNavigation(repos: Repos) {
                         else -> scope.launch {
                             repos.userRepo.setPaymentPassword(userPhone, paymentPwdInput)
                             needsPaymentPwd = false
-                            loginAttempt++
+                            doNavigateHome()
                         }
                     }
                 }) { Text("确认") }
@@ -157,8 +152,17 @@ fun AppNavigation(repos: Repos) {
     NavHost(navController = navController, startDestination = Routes.LOGIN) {
         composable(Routes.LOGIN) {
             LoginScreen(onLoginSuccess = { phone ->
+                Log.d("TTBS_NAV", "onLoginSuccess called, phone=$phone")
                 userPhone = phone
-                loginAttempt++
+                scope.launch {
+                    val user = repos.userRepo.getByPhone(phone)
+                    if (user != null && user.paymentPassword.isEmpty()) {
+                        Log.d("TTBS_NAV", "new user, showing payment pwd dialog")
+                        needsPaymentPwd = true
+                    } else {
+                        doNavigateHome()
+                    }
+                }
             })
         }
         composable(Routes.HOME) {

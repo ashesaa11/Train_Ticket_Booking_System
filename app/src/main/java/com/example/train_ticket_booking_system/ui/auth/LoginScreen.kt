@@ -1,5 +1,6 @@
 package com.example.train_ticket_booking_system.ui.auth
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,8 +56,11 @@ fun LoginScreen(
     val state by viewModel.state.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.isLoggedIn) {
-        if (state.isLoggedIn) onLoginSuccess(state.phone)
+    LaunchedEffect(Unit) {
+        viewModel.loginEvent.collect {
+            Log.d("TTBS_AUTH", "loginEvent received, navigating")
+            onLoginSuccess(state.phone)
+        }
     }
 
     Box(
