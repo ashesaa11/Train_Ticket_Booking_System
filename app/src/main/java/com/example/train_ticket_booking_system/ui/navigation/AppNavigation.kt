@@ -97,8 +97,10 @@ fun AppNavigation(repos: Repos) {
             val user = repos.userRepo.getByPhone(userPhone)
             if (user != null && user.paymentPassword.isEmpty()) {
                 needsPaymentPwd = true
+                navigateToHome = false
             } else {
                 navController.navigate(Routes.HOME)
+                navigateToHome = false
             }
         }
     }

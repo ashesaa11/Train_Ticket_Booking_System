@@ -95,7 +95,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun devLogin() {
-        _state.value = _state.value.copy(loading = true, error = null)
+        _state.value = _state.value.copy(loading = true, isLoggedIn = false, error = null)
         viewModelScope.launch {
             try {
                 val devPhone = "13800000000"
