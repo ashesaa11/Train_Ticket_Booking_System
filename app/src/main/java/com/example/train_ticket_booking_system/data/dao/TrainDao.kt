@@ -33,4 +33,12 @@ interface TrainDao {
 
     @Query("SELECT * FROM train_stop WHERE trainId = :trainId ORDER BY stopOrder")
     suspend fun getStops(trainId: Long): List<TrainStop>
+
+    @Query("""
+        SELECT DISTINCT ts2.stationId FROM train_stop ts1
+        INNER JOIN train_stop ts2 ON ts1.trainId = ts2.trainId
+        WHERE ts1.stationId = :fromStationId
+        AND ts2.stopOrder > ts1.stopOrder
+    """)
+    suspend fun getReachableStationIds(fromStationId: Long): List<Long>
 }

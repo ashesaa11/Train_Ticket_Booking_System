@@ -6,6 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "user")
 data class User(
     @PrimaryKey val phone: String,
-    val paymentPassword: String,
+    val password: String = "",
+    val paymentPassword: String = "",
+    val nickname: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )

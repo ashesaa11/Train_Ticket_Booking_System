@@ -22,4 +22,5 @@ class TrainRepository(private val dao: TrainDao) {
     suspend fun getAll(): List<Train> = dao.getAll()
     suspend fun insert(train: Train) { dao.insertAll(listOf(train)) }
     suspend fun insertStop(stop: TrainStop) { dao.insertStops(listOf(stop)) }
+    suspend fun getReachableStationIds(fromStationId: Long): List<Long> = dao.getReachableStationIds(fromStationId)
 }

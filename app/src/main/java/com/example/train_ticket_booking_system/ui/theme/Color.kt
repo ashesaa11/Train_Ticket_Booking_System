@@ -2,10 +2,29 @@ package com.example.train_ticket_booking_system.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Primary Blue
+val Blue500 = Color(0xFF1A73E8)
+val Blue600 = Color(0xFF1557B0)
+val Blue700 = Color(0xFF0D47A1)
+val Blue100 = Color(0xFFD2E3FC)
+val Blue50 = Color(0xFFE8F0FE)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Secondary Green (ticket/payment cues)
+val Green500 = Color(0xFF188038)
+val Green100 = Color(0xFFCEECD6)
+
+// Neutral
+val Gray50 = Color(0xFFF8F9FA)
+val Gray100 = Color(0xFFF1F3F4)
+val Gray300 = Color(0xFFDADCE0)
+val Gray500 = Color(0xFF9AA0A6)
+val Gray700 = Color(0xFF5F6368)
+val Gray900 = Color(0xFF202124)
+
+// Semantic
+val Red500 = Color(0xFFEA4335)
+val Orange500 = Color(0xFFF9AB00)
+
+// Background
+val BackgroundLight = Color(0xFFF5F7FA)
+val SurfaceWhite = Color(0xFFFFFFFF)
