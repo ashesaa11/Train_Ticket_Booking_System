@@ -79,7 +79,7 @@ fun AppNavigation(repos: Repos) {
 
     LaunchedEffect(navigateToHome) {
         if (navigateToHome) {
-            navController.navigate(Routes.HOME) { popUpTo(Routes.LOGIN) { inclusive = true } }
+            navController.navigate(Routes.HOME)
         }
     }
 
@@ -190,7 +190,6 @@ fun AppNavigation(repos: Repos) {
 
 @Composable
 fun MainScreen(userPhone: String, repos: Repos, onNavigate: (String) -> Unit) {
-    val innerNavController = rememberNavController()
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -200,9 +199,9 @@ fun MainScreen(userPhone: String, repos: Repos, onNavigate: (String) -> Unit) {
                     BottomNavItem("我的", Icons.Default.Person, Routes.PROFILE)
                 ).forEach { item ->
                     NavigationBarItem(
-                        selected = innerNavController.currentBackStackEntryAsState().value?.destination?.route == item.route,
+                        selected = false,
                         onClick = {
-                            if (item.route == Routes.ORDERS || item.route == Routes.PROFILE) onNavigate(item.route)
+                            if (item.route != Routes.HOME) onNavigate(item.route)
                         },
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) }
@@ -211,9 +210,7 @@ fun MainScreen(userPhone: String, repos: Repos, onNavigate: (String) -> Unit) {
             }
         }
     ) { padding ->
-        NavHost(innerNavController, startDestination = Routes.HOME, modifier = Modifier.padding(padding)) {
-            composable(Routes.HOME) { HomeScreen(repos, onNavigate) }
-        }
+        HomeScreen(repos = repos, onNavigate = onNavigate)
     }
 }
 
