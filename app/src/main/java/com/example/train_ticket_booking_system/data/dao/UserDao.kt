@@ -8,7 +8,7 @@ import com.example.train_ticket_booking_system.data.entity.User
 
 @Dao
 interface UserDao {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(user: User)
 
     @Query("SELECT * FROM user WHERE phone = :phone")

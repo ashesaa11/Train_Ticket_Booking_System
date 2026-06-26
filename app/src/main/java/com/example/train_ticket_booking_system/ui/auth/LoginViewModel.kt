@@ -65,11 +65,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private fun login(phone: String, password: String) {
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            val user = userRepo.login(phone, password)
-            if (user != null) {
-                _state.value = _state.value.copy(loading = false, isLoggedIn = true, loggedInUser = user)
-            } else {
-                _state.value = _state.value.copy(loading = false, error = "手机号或密码错误")
+            try {
+                val user = userRepo.login(phone, password)
+                if (user != null) {
+                    _state.value = _state.value.copy(loading = false, isLoggedIn = true, loggedInUser = user)
+                } else {
+                    _state.value = _state.value.copy(loading = false, error = "手机号或密码错误")
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(loading = false, error = "登录失败，请重试")
             }
         }
     }
@@ -77,11 +81,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private fun register(phone: String, password: String) {
         _state.value = _state.value.copy(loading = true, error = null)
         viewModelScope.launch {
-            val user = userRepo.register(phone, password)
-            if (user != null) {
-                _state.value = _state.value.copy(loading = false, isLoggedIn = true, loggedInUser = user)
-            } else {
-                _state.value = _state.value.copy(loading = false, error = "该手机号已注册")
+            try {
+                val user = userRepo.register(phone, password)
+                if (user != null) {
+                    _state.value = _state.value.copy(loading = false, isLoggedIn = true, loggedInUser = user)
+                } else {
+                    _state.value = _state.value.copy(loading = false, error = "该手机号已注册")
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(loading = false, error = "注册失败，请重试")
             }
         }
     }
