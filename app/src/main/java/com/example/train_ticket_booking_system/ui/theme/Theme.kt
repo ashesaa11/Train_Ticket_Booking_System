@@ -6,6 +6,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -34,12 +35,13 @@ private val LightColorScheme = lightColorScheme(
 fun Train_Ticket_Booking_SystemTheme(
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = Blue600.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            val activity = context as? Activity ?: return@SideEffect
+            activity.window.statusBarColor = Blue600.toArgb()
+            WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars = false
         }
     }
 
