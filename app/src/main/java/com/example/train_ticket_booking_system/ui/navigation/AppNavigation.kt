@@ -75,12 +75,19 @@ data class Repos(
 fun AppNavigation(repos: Repos) {
     val navController = rememberNavController()
     var userPhone by remember { mutableStateOf("") }
+    var navigateToHome by remember { mutableStateOf(false) }
+
+    LaunchedEffect(navigateToHome) {
+        if (navigateToHome) {
+            navController.navigate(Routes.HOME) { popUpTo(Routes.LOGIN) { inclusive = true } }
+        }
+    }
 
     NavHost(navController = navController, startDestination = Routes.LOGIN) {
         composable(Routes.LOGIN) {
             LoginScreen(onLoginSuccess = { phone ->
                 userPhone = phone
-                navController.navigate(Routes.HOME) { popUpTo(Routes.LOGIN) { inclusive = true } }
+                navigateToHome = true
             })
         }
         composable(Routes.HOME) {
