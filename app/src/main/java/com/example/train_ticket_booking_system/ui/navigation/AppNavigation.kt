@@ -33,12 +33,15 @@ import com.example.train_ticket_booking_system.data.repository.PassengerReposito
 import com.example.train_ticket_booking_system.data.repository.StationRepository
 import com.example.train_ticket_booking_system.data.repository.TrainRepository
 import com.example.train_ticket_booking_system.data.repository.UserRepository
+import com.example.train_ticket_booking_system.ui.ai.AIChatScreen
 import com.example.train_ticket_booking_system.ui.auth.LoginScreen
 import com.example.train_ticket_booking_system.ui.home.HomeScreen
 import com.example.train_ticket_booking_system.ui.order.OrderConfirmScreen
 import com.example.train_ticket_booking_system.ui.order.OrderDetailScreen
 import com.example.train_ticket_booking_system.ui.order.OrderListScreen
 import com.example.train_ticket_booking_system.ui.order.PaymentScreen
+import com.example.train_ticket_booking_system.ui.profile.DataManageScreen
+import com.example.train_ticket_booking_system.ui.profile.PassengerManageScreen
 import com.example.train_ticket_booking_system.ui.profile.ProfileScreen
 import com.example.train_ticket_booking_system.ui.train.PassengerSelectScreen
 import com.example.train_ticket_booking_system.ui.train.SeatSelectScreen
@@ -55,6 +58,9 @@ object Routes {
     const val ORDER_CONFIRM = "order_confirm/{trainId}/{trainNumber}/{depTime}/{arrTime}/{depStation}/{arrStation}/{date}/{seatTypeName}/{seatPrice}/{passengerIds}"
     const val PAYMENT = "payment/{trainId}/{trainNumber}/{depStation}/{arrStation}/{date}/{depTime}/{arrTime}/{seatTypeName}/{seatPrice}/{passengerIds}"
     const val ORDER_DETAIL = "order_detail/{orderId}"
+    const val PASSENGER_MANAGE = "passenger_manage"
+    const val DATA_MANAGE = "data_manage"
+    const val AI_CHAT = "ai_chat"
 }
 
 data class Repos(
@@ -162,6 +168,15 @@ fun AppNavigation(repos: Repos) {
                 { navController.popBackStack() },
                 { navController.popBackStack(Routes.HOME, false) }
             )
+        }
+        composable(Routes.PASSENGER_MANAGE) {
+            PassengerManageScreen(userPhone, navController, repos.passengerRepo)
+        }
+        composable(Routes.DATA_MANAGE) {
+            DataManageScreen(repos, navController)
+        }
+        composable(Routes.AI_CHAT) {
+            AIChatScreen(userPhone, navController)
         }
     }
 }
