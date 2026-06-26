@@ -24,4 +24,12 @@ class UserRepository(private val dao: UserDao) {
         val user = dao.getByPhone(phone) ?: return false
         return user.paymentPassword == password
     }
+
+    suspend fun getNickname(phone: String): String {
+        return dao.getByPhone(phone)?.nickname ?: "用户"
+    }
+
+    suspend fun updateNickname(phone: String, nickname: String) {
+        dao.updateNickname(phone, nickname)
+    }
 }

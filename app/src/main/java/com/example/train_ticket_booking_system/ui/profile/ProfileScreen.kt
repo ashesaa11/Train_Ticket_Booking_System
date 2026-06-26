@@ -36,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,10 +61,17 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(userPhone: String, repos: Repos, navController: NavController) {
     val scope = rememberCoroutineScope()
     var showPwdDialog by remember { mutableStateOf(false) }
+    var showNicknameDialog by remember { mutableStateOf(false) }
+    var nickname by remember { mutableStateOf("用户") }
+    var newNickname by remember { mutableStateOf("") }
     var oldPwd by remember { mutableStateOf("") }
     var newPwd by remember { mutableStateOf("") }
     var confirmPwd by remember { mutableStateOf("") }
     var pwdError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(userPhone) {
+        nickname = repos.userRepo.getNickname(userPhone)
+    }
 
     Scaffold(
         topBar = {
@@ -76,16 +84,17 @@ fun ProfileScreen(userPhone: String, repos: Repos, navController: NavController)
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
             // Avatar card
-            Surface(color = Color(0xFF1A73E8), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = Color(0xFF1A73E8), modifier = Modifier.fillMaxWidth().clickable { newNickname = nickname; showNicknameDialog = true }) {
                 Row(Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
                     Surface(Modifier.size(56.dp).clip(CircleShape), color = Color.White.copy(alpha = 0.2f)) {
                         Icon(Icons.Default.Person, null, Modifier.padding(12.dp), tint = Color.White)
                     }
                     Spacer(Modifier.width(16.dp))
-                    Column {
-                        Text("火车票用户", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text("已登录", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                    Column(Modifier.weight(1f)) {
+                        Text(nickname, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(userPhone, color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
                     }
+                    Icon(Icons.Default.Edit, null, tint = Color.White.copy(alpha = 0.6f))
                 }
             }
 
@@ -144,6 +153,30 @@ fun ProfileScreen(userPhone: String, repos: Repos, navController: NavController)
                 }) { Text("确认修改") }
             },
             dismissButton = { TextButton(onClick = { showPwdDialog = false; oldPwd = ""; newPwd = ""; confirmPwd = ""; pwdError = null }) { Text("取消") } }
+        )
+    }
+
+    if (showNicknameDialog) {
+        AlertDialog(
+            onDismissRequest = { showNicknameDialog = false },
+            title = { Text("修改用户名") },
+            text = {
+                OutlinedTextField(newNickname, { newNickname = it.take(12) },
+                    label = { Text("用户名") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val trimmed = newNickname.trim()
+                    if (trimmed.isNotBlank()) {
+                        scope.launch {
+                            repos.userRepo.updateNickname(userPhone, trimmed)
+                            nickname = trimmed
+                            showNicknameDialog = false
+                        }
+                    }
+                }) { Text("保存") }
+            },
+            dismissButton = { TextButton(onClick = { showNicknameDialog = false }) { Text("取消") } }
         )
     }
 }
