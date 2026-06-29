@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +31,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +49,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import androidx.compose.ui.unit.sp
 import com.example.train_ticket_booking_system.data.entity.Station
 import com.example.train_ticket_booking_system.ui.navigation.Repos
@@ -84,6 +86,9 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
         if (fromStation == null || toStation == null) { showError = "请选择出发站和到达站"; return }
         if (fromStation!!.id == toStation!!.id) { showError = "出发站和到达站不能相同"; return }
         if (DateTimeUtil.parseDate(selectedDate).isBefore(LocalDate.now())) { showError = "出发日期不能早于今天"; return }
+        val maxDate = LocalDate.now().plusDays(14)
+        if (DateTimeUtil.parseDate(selectedDate).isAfter(maxDate)) { showError = "仅支持查询15天内的车次"; return }
+        Log.d("TTBS_HOME", "doSearch: ${fromStation!!.name}(${fromStation!!.id}) -> ${toStation!!.name}(${toStation!!.id}), date=$selectedDate")
         showError = null
         onNavigate("train_list/${fromStation!!.id}/${toStation!!.id}/$selectedDate")
     }
@@ -127,7 +132,7 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
                         value = fromSearch.ifEmpty { fromStation?.name ?: "" },
                         onValueChange = { fromSearch = it },
                         label = { Text("出发站") },
-                        leadingIcon = { Icon(Icons.Default.FlightTakeoff, null, tint = Color(0xFF1A73E8)) },
+                        leadingIcon = { Icon(Icons.Default.Train, null, tint = Color(0xFF1A73E8)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(fromExpanded) },
                         modifier = Modifier.fillMaxWidth().menuAnchor(),
                         shape = RoundedCornerShape(12.dp)
@@ -150,7 +155,7 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
                         value = toSearch.ifEmpty { toStation?.name ?: "" },
                         onValueChange = { toSearch = it },
                         label = { Text("到达站") },
-                        leadingIcon = { Icon(Icons.Default.FlightTakeoff, null, tint = Color(0xFF188038), modifier = Modifier.padding(start = 2.dp)) },
+                        leadingIcon = { Icon(Icons.Default.Train, null, tint = Color(0xFF188038), modifier = Modifier.padding(start = 2.dp)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(toExpanded) },
                         modifier = Modifier.fillMaxWidth().menuAnchor(),
                         shape = RoundedCornerShape(12.dp)
@@ -184,9 +189,16 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
                     shape = RoundedCornerShape(12.dp)
                 )
                 if (showDatePicker) {
+                    val todayEpoch = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val maxEpoch = LocalDate.now().plusDays(14).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val datePickerState = rememberDatePickerState(
                         initialSelectedDateMillis = DateTimeUtil.parseDate(selectedDate)
-                            .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                            .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                        selectableDates = object : SelectableDates {
+                            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                                utcTimeMillis in todayEpoch..maxEpoch
+                            override fun isSelectableYear(year: Int): Boolean = year == LocalDate.now().year
+                        }
                     )
                     DatePickerDialog(
                         onDismissRequest = { showDatePicker = false },

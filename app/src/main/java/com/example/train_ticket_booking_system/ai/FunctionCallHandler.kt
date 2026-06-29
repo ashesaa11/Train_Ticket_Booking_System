@@ -112,7 +112,7 @@ class FunctionCallHandler(
         if (fromStations.isEmpty()) return "未找到出发站: $from"
         if (toStations.isEmpty()) return "未找到到达站: $to"
 
-        val trains = trainRepo.search(fromStations.first().id, toStations.first().id)
+        val trains = trainRepo.search(fromStations.first().id, toStations.first().id, date)
         Log.d(TAG, "search_trains: found ${trains.size} trains")
         if (trains.isEmpty()) return "未找到${fromStations.first().name}到${toStations.first().name}($date)的车次"
 
