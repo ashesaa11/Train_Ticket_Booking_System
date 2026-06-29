@@ -35,13 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import android.util.Log
@@ -274,19 +275,19 @@ fun AppNavigation(repos: Repos) {
     }
 
     // AI Draggable floating button - hides on login and AI chat page
-    val currentRoute = navController.currentDestination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
     if (isLoggedIn && currentRoute != Routes.LOGIN && currentRoute != Routes.AI_CHAT) {
-        var offsetX by remember { mutableStateOf(0f) }
-        var offsetY by remember { mutableStateOf(0f) }
-        val fabSize = 56.dp
         FloatingActionButton(
             onClick = { navController.navigate(Routes.AI_CHAT) },
             modifier = Modifier
-                .align(Alignment.TopStart)
+                .align(Alignment.BottomEnd)
                 .offset(x = offsetX.dp, y = offsetY.dp)
                 .padding(24.dp)
                 .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
+                    detectDragGesturesAfterLongPress { change, dragAmount ->
                         change.consume()
                         offsetX += dragAmount.x
                         offsetY += dragAmount.y
