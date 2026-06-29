@@ -35,7 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -287,7 +287,7 @@ fun AppNavigation(repos: Repos) {
                 .offset(x = offsetX.dp, y = offsetY.dp)
                 .padding(24.dp)
                 .pointerInput(Unit) {
-                    detectDragGesturesAfterLongPress { change, dragAmount ->
+                    detectDragGestures { change, dragAmount ->
                         change.consume()
                         offsetX += dragAmount.x * 0.4f
                         offsetY += dragAmount.y * 0.4f

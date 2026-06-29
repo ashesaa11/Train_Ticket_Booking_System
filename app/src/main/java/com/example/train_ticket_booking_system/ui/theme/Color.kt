@@ -28,3 +28,12 @@ val Orange500 = Color(0xFFF9AB00)
 // Background
 val BackgroundLight = Color(0xFFF5F7FA)
 val SurfaceWhite = Color(0xFFFFFFFF)
+
+// Dark Mode
+val DarkBackground = Color(0xFF121212)
+val DarkSurface = Color(0xFF1E1E1E)
+val DarkSurfaceVariant = Color(0xFF2D2D2D)
+val DarkOnBackground = Color(0xFFE8EAED)
+val DarkOnSurface = Color(0xFFE8EAED)
+val DarkOnSurfaceVariant = Color(0xFF9AA0A6)
+val DarkOutline = Color(0xFF5F6368)

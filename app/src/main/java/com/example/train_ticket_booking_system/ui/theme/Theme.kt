@@ -1,7 +1,9 @@
 package com.example.train_ticket_booking_system.ui.theme
 
 import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -31,22 +33,45 @@ private val LightColorScheme = lightColorScheme(
     onError = SurfaceWhite
 )
 
+private val DarkColorScheme = darkColorScheme(
+    primary = Blue500,
+    onPrimary = SurfaceWhite,
+    primaryContainer = Blue700,
+    onPrimaryContainer = Blue100,
+    secondary = Green500,
+    onSecondary = SurfaceWhite,
+    secondaryContainer = Green100,
+    onSecondaryContainer = Green500,
+    tertiary = Orange500,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    error = Red500,
+    onError = SurfaceWhite
+)
+
 @Composable
 fun Train_Ticket_Booking_SystemTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val context = LocalContext.current
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val activity = context as? Activity ?: return@SideEffect
-            activity.window.statusBarColor = Blue600.toArgb()
-            WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars = false
+            activity.window.statusBarColor = if (darkTheme) DarkBackground.toArgb() else Blue600.toArgb()
+            WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content
     )
