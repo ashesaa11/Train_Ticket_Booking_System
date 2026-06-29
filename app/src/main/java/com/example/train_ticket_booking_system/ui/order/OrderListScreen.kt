@@ -51,8 +51,8 @@ import com.example.train_ticket_booking_system.ui.navigation.Repos
 fun OrderListScreen(repos: Repos, userPhone: String, navController: NavController) {
     var orders by remember { mutableStateOf<List<TrainOrder>>(emptyList()) }
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("全部", "未出行", "已出行", "已退票", "已改签")
-    val statuses = listOf(null, "未出行", "已出行", "已退票", "已改签")
+    val tabs = listOf("全部", "未出行", "已出行", "已退票")
+    val statuses = listOf(null, "未出行", "已出行", "已退票")
 
     LaunchedEffect(userPhone) { orders = repos.orderRepo.getOrdersByUser(userPhone) }
 
@@ -88,7 +88,7 @@ fun OrderListScreen(repos: Repos, userPhone: String, navController: NavControlle
                                 Row {
                                     Text(o.trainNumber, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                     Spacer(Modifier.width(8.dp))
-                                    val sc = when(o.status) { "未出行" -> Color(0xFF1A73E8); "已出行" -> Color(0xFF188038); "已退票" -> Color(0xFFEA4335); "已改签" -> Color(0xFFF9AB00); else -> Color(0xFF5F6368) }
+                                    val sc = when(o.status) { "未出行" -> Color(0xFF1A73E8); "已出行" -> Color(0xFF188038); "已退票" -> Color(0xFFEA4335); else -> Color(0xFF5F6368) }
                                     Text(o.status, color = sc, fontWeight = FontWeight.Medium, fontSize = 13.sp)
                                 }
                                 Spacer(Modifier.height(6.dp))

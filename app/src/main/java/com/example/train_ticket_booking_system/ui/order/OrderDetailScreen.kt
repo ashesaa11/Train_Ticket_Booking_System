@@ -51,7 +51,6 @@ import kotlinx.coroutines.launch
 fun OrderDetailScreen(orderId: Long, orderRepo: OrderRepository, onBack: () -> Unit, onToHome: () -> Unit) {
     var orderWithItems by remember { mutableStateOf<OrderDao.OrderWithItems?>(null) }
     var showRefund by remember { mutableStateOf(false) }
-    var showReschedule by remember { mutableStateOf(false) }
     var refundAmount by remember { mutableStateOf(0.0) }
     val scope = rememberCoroutineScope()
 
@@ -72,7 +71,7 @@ fun OrderDetailScreen(orderId: Long, orderRepo: OrderRepository, onBack: () -> U
     ) { padding ->
         orderWithItems?.let { owi ->
             val o = owi.order
-            val sc = when(o.status) { "未出行" -> Color(0xFF1A73E8); "已出行" -> Color(0xFF188038); "已退票" -> Color(0xFFEA4335); "已改签" -> Color(0xFFF9AB00); else -> Color(0xFF5F6368) }
+            val sc = when(o.status) { "未出行" -> Color(0xFF1A73E8); "已出行" -> Color(0xFF188038); "已退票" -> Color(0xFFEA4335); else -> Color(0xFF5F6368) }
             Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
                 Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), elevation = CardDefaults.cardElevation(2.dp)) {
                     Column(Modifier.padding(16.dp)) {
@@ -104,11 +103,7 @@ fun OrderDetailScreen(orderId: Long, orderRepo: OrderRepository, onBack: () -> U
                     }
                 }
                 if (o.status == "未出行") {
-                    Row(Modifier.fillMaxWidth()) {
-                        Button(onClick = { showReschedule = true }, Modifier.weight(1f), enabled = o.originalOrderId == null, shape = RoundedCornerShape(12.dp)) { Text("改签") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { showRefund = true }, Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335)), shape = RoundedCornerShape(12.dp)) { Text("退票") }
-                    }
+                    Button(onClick = { showRefund = true }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA4335)), shape = RoundedCornerShape(12.dp)) { Text("退票") }
                 } else Button(onClick = onToHome, Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Text("返回首页") }
             }
 
@@ -123,15 +118,6 @@ fun OrderDetailScreen(orderId: Long, orderRepo: OrderRepository, onBack: () -> U
                         TextButton(onClick = { scope.launch { orderRepo.updateOrderStatus(o.id, "已退票"); showRefund = false; orderWithItems = orderRepo.getOrderWithItems(orderId) } }) { Text("确认退票") }
                     },
                     dismissButton = { TextButton(onClick = { showRefund = false }) { Text("取消") } }
-                )
-            }
-            if (showReschedule) {
-                AlertDialog(
-                    onDismissRequest = { showReschedule = false },
-                    title = { Text("改签提示") },
-                    text = { Text("改签后将跳转到同路线车次列表，原订单作废。\n改签费根据距出发时间计算。") },
-                    confirmButton = { TextButton(onClick = { showReschedule = false }) { Text("知道了") } },
-                    dismissButton = { TextButton(onClick = { showReschedule = false }) { Text("关闭") } }
                 )
             }
         }
