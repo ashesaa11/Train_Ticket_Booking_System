@@ -75,8 +75,8 @@ class FunctionCallHandler(
         JSONObject().apply {
             put("type", "function")
             put("function", JSONObject().apply {
-                put("name", "list_passengers")
-                put("description", "查询当前用户的常用乘客列表，返回姓名、乘客类型、身份证号。购票前必须先调用此接口获取可用乘客。")
+                put("name", "list_orders")
+                put("description", "查询当前用户的订单列表，返回订单ID、状态、车次、日期、价格。退票前必须先调用此接口获取可退订单。")
                 put("parameters", JSONObject().apply {
                     put("type", "object")
                     put("properties", JSONObject())
@@ -95,6 +95,7 @@ class FunctionCallHandler(
             "book_ticket" -> bookTicket(args)
             "refund_ticket" -> refundTicket(args)
             "list_passengers" -> listPassengers()
+            "list_orders" -> listOrders()
             else -> "未知操作: $name"
         }
         Log.d(TAG, "execute result($name): ${result.take(200)}")
@@ -185,5 +186,15 @@ class FunctionCallHandler(
         if (list.isEmpty()) return "暂无常用乘客，请在「我的-常用乘客」中添加"
         Log.d(TAG, "list_passengers: found ${list.size} passengers")
         return list.joinToString("\n") { "${it.name} | ${it.passengerType} | ${it.idCard}" }
+    }
+
+    private suspend fun listOrders(): String {
+        Log.d(TAG, "list_orders called")
+        val orders = orderRepo.getOrdersByUser(userPhone)
+        if (orders.isEmpty()) return "暂无订单"
+        Log.d(TAG, "list_orders: found ${orders.size} orders")
+        return orders.joinToString("\n") { o ->
+            "订单ID:${o.id} | ${o.trainNumber} | ${o.departureStationName}→${o.arrivalStationName} | ${o.departureDate} ${o.departureTime}-${o.arrivalTime} | ${o.status} | ¥${o.totalPrice.toInt()}"
+        }
     }
 }

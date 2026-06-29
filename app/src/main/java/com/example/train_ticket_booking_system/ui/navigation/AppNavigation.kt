@@ -1,7 +1,9 @@
 package com.example.train_ticket_booking_system.ui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -10,7 +12,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -91,6 +96,7 @@ fun AppNavigation(repos: Repos) {
     var paymentPwdInput by remember { mutableStateOf("") }
     var paymentPwdConfirm by remember { mutableStateOf("") }
     var pwdError by remember { mutableStateOf<String?>(null) }
+    var isLoggedIn by remember { mutableStateOf(false) }
 
     fun doNavigateHome() {
         Log.d("TTBS_NAV", "doNavigateHome called, current dest: ${navController.currentDestination?.route}")
@@ -149,11 +155,13 @@ fun AppNavigation(repos: Repos) {
         )
     }
 
-    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(navController = navController, startDestination = Routes.LOGIN) {
         composable(Routes.LOGIN) {
             LoginScreen(onLoginSuccess = { phone ->
                 Log.d("TTBS_NAV", "onLoginSuccess called, phone=$phone")
                 userPhone = phone
+                isLoggedIn = true
                 scope.launch {
                     val user = repos.userRepo.getByPhone(phone)
                     if (user != null && user.paymentPassword.isEmpty()) {
@@ -259,6 +267,20 @@ fun AppNavigation(repos: Repos) {
         }
         composable(Routes.AI_CHAT) {
             AIChatScreen(userPhone, navController)
+        }
+    }
+
+    // AI Floating button - visible on all screens after login
+    if (isLoggedIn && navController.currentDestination?.route != Routes.LOGIN) {
+            FloatingActionButton(
+                onClick = { navController.navigate(Routes.AI_CHAT) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp),
+                containerColor = Color(0xFF1A73E8)
+            ) {
+                Icon(Icons.Default.SmartToy, "AI助手", tint = Color.White)
+            }
         }
     }
 }

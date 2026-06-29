@@ -57,17 +57,37 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
             PassengerRepository(db.passengerDao()),
             userPhone
         )
-        loadHistory()
+        // Clear history on every app restart
+        viewModelScope.launch {
+            db.chatHistoryDao().deleteByUser(currentUserPhone)
+            llmMessages.clear()
+            _state.value = _state.value.copy(messages = emptyList())
+            Log.d("TTBS_AI_VM", "initHandler: history cleared for fresh session")
+        }
     }
 
     private fun loadHistory() {
         viewModelScope.launch {
-            val history = db.chatHistoryDao().getByUser(currentUserPhone)
-            val msgs = history.map { ChatMessage(it.role == "user", it.content) }
+            val allHistory = db.chatHistoryDao().getByUser(currentUserPhone)
+            // Only load last 10 exchanges (20 messages) to avoid context pollution
+            val recent = allHistory.takeLast(20)
+            val msgs = recent.map { ChatMessage(it.role == "user", it.content) }
             _state.value = _state.value.copy(messages = msgs)
-            // Also rebuild LLM messages for context
             llmMessages.clear()
-            history.forEach { llmMessages.add(LLMMessage(role = it.role, content = it.content)) }
+            // Only load user and assistant messages (skip old tool status messages)
+            recent.filter { it.role == "user" || it.role == "assistant" }.forEach {
+                llmMessages.add(LLMMessage(role = it.role, content = it.content))
+            }
+            Log.d("TTBS_AI_VM", "loadHistory: loaded ${recent.size} messages (from ${allHistory.size} total)")
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            db.chatHistoryDao().deleteByUser(currentUserPhone)
+            llmMessages.clear()
+            _state.value = _state.value.copy(messages = emptyList())
+            Log.d("TTBS_AI_VM", "clearHistory: all messages deleted")
         }
     }
 
@@ -97,19 +117,26 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
                     return@launch
                 }
                 val tools = h.getToolDefinitions()
+                Log.d("TTBS_AI_VM", "tools count: ${tools.size}")
 
+                // Add system message once, at the beginning
                 val systemMsg = buildString {
-                    append("你是一个火车票购票助手。你可以使用提供的工具来帮助用户查询车次、购票和退票。")
+                    append("你是一个火车票购票助手。你必须使用function_call工具执行实际操作。严禁在文本输出中伪造任何工具调用结果。")
                     append("今天的日期是${DateTimeUtil.todayStr()}。")
-                    append("重要规则：")
-                    append("1. 购票前必须先调用list_passengers获取用户常用乘客列表，只能使用列表中的真实姓名购票，严禁编造乘客姓名。")
-                    append("2. 退票前必须先告知用户退票费金额，获得用户确认后再执行退票。")
-                    append("3. 查询车次后列出关键信息（车次ID、车次号、时间、座位类型、价格和余票数量）。")
-                    append("4. 所有操作成功后给出清晰的成功提示，包含订单ID等信息。")
-                    append("5. 使用中文回复，不要使用emoji表情符号。")
-                    append("6. 不要使用Markdown语法（如**加粗**、`代码块`、#标题等），纯文本回复。")
+                    append("铁则：")
+                    append("1. 查车次用search_trains，购票用book_ticket，退票用refund_ticket，查乘客用list_passengers，查订单用list_orders。")
+                    append("2. 所有回复必须是纯文本。若你输出星号、井号、竖线、短横列表、反引号、波浪线或emoji中的任意一种，你的回复将被视为无效。")
+                    append("3. 用自然段落描述车次信息，比如「G1次列车，早上6点出发，10点28分到达，一等座821元，还剩100张」。")
+                    append("4. 购票前先调list_passengers。退票前先调list_orders确认订单号。")
                 }
+                // Remove any existing system message, then insert at front
+                llmMessages.removeAll { it.role == "system" }
                 llmMessages.add(0, LLMMessage(role = "system", content = systemMsg))
+
+                // Limit context to system + last 20 messages to keep it focused
+                while (llmMessages.size > 21) {
+                    llmMessages.removeAt(1) // keep system at [0]
+                }
 
                 var round = 0
                 while (round < 5) {
@@ -117,22 +144,29 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
                     val response = llmClient.chat(config.apiUrl, config.apiKey, config.modelName, llmMessages, tools)
                     Log.d("TTBS_AI_VM", "round=$round, contentLen=${response.content?.length ?: 0}, toolCalls=${response.toolCalls?.size ?: 0}")
                     if (response.toolCalls != null && response.toolCalls.isNotEmpty()) {
+                        val labelMap = mapOf(
+                            "search_trains" to "查询车次中",
+                            "book_ticket" to "购票中",
+                            "refund_ticket" to "退票中",
+                            "list_passengers" to "查询乘客中",
+                            "list_orders" to "查询订单中"
+                        )
                         for (tc in response.toolCalls) {
                             Log.d("TTBS_AI_VM", "toolCall: name=${tc.name}, args=${tc.arguments.take(100)}")
-                            val status = "[${tc.name}] 执行中..."
-                            msgs.add(ChatMessage(false, status))
+                            val label = labelMap[tc.name] ?: "${tc.name} 执行中"
+                            msgs.add(ChatMessage(false, "$label..."))
                             _state.value = _state.value.copy(messages = msgs.toList())
-                            viewModelScope.launch { saveMessage("assistant", status) }
+                            // Do NOT save tool status to history - it pollutes LLM context
 
                             llmMessages.add(LLMMessage(role = "assistant", content = null, toolCalls = listOf(tc)))
 
                             val result = h.execute(tc.name, tc.arguments)
                             llmMessages.add(LLMMessage(role = "tool", content = result, toolCallId = tc.id))
 
-                            val done = "[${tc.name}] 完成"
+                            val done = "${labelMap[tc.name] ?: "操作"} 完成"
                             msgs.add(ChatMessage(false, done))
                             _state.value = _state.value.copy(messages = msgs.toList())
-                            viewModelScope.launch { saveMessage("assistant", done) }
+                            // Do NOT save tool status to history
                         }
                     } else if (response.content != null) {
                         msgs.add(ChatMessage(false, response.content))

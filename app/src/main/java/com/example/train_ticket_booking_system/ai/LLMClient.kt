@@ -1,5 +1,6 @@
 package com.example.train_ticket_booking_system.ai
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -19,6 +20,7 @@ class LLMClient {
         apiUrl: String, apiKey: String, model: String,
         messages: List<LLMMessage>, tools: List<JSONObject>? = null
     ): LLMResponse = withContext(Dispatchers.IO) {
+        Log.d("TTBS_LLM", "chat: model=$model, msgs=${messages.size}, tools=${tools?.size ?: 0}")
         val body = JSONObject().apply {
             put("model", model)
             put("messages", JSONArray().apply {
@@ -55,11 +57,14 @@ class LLMClient {
             BufferedReader(InputStreamReader(conn.inputStream)).readText()
         } else {
             val err = BufferedReader(InputStreamReader(conn.errorStream)).readText()
+            Log.e("TTBS_LLM", "API error: code=${conn.responseCode}, body=$err")
             throw Exception("API error ${conn.responseCode}: $err")
         }
 
+        Log.d("TTBS_LLM", "response: ${responseBody.take(400)}")
         val json = JSONObject(responseBody)
         val choice = json.getJSONArray("choices").getJSONObject(0)
+        val finishReason = choice.optString("finish_reason", "")
         val message = choice.getJSONObject("message")
         val content = message.optString("content", "").takeIf { it.isNotEmpty() }
 
@@ -73,6 +78,7 @@ class LLMClient {
             }
         } else null
 
+        Log.d("TTBS_LLM", "parsed: finish=$finishReason, contentLen=${content?.length ?: 0}, toolCalls=${toolCalls?.size ?: 0}")
         LLMResponse(content, toolCalls)
     }
 }
