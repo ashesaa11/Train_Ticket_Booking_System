@@ -13,6 +13,7 @@ import com.example.train_ticket_booking_system.data.repository.OrderRepository
 import com.example.train_ticket_booking_system.data.repository.PassengerRepository
 import com.example.train_ticket_booking_system.data.repository.StationRepository
 import com.example.train_ticket_booking_system.data.repository.TrainRepository
+import android.util.Log
 import com.example.train_ticket_booking_system.util.DateTimeUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,6 +76,7 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun sendMessage(text: String) {
+        Log.d("TTBS_AI_VM", "sendMessage: ${text.take(80)}")
         val msgs = _state.value.messages.toMutableList()
         msgs.add(ChatMessage(true, text))
         _state.value = _state.value.copy(messages = msgs, loading = true, error = null)
@@ -100,10 +102,10 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
                     append("你是一个火车票购票助手。你可以使用提供的工具来帮助用户查询车次、购票和退票。")
                     append("今天的日期是${DateTimeUtil.todayStr()}。")
                     append("重要规则：")
-                    append("1. 购票时必须使用用户常用乘客列表中的姓名，不要编造乘客。")
-                    append("2. 退票前应告知用户退票费金额并请求确认。")
-                    append("3. 查询车次后列出关键信息（车次ID、车次号、时间、座位和价格）。")
-                    append("4. 所有操作成功后给出清晰的成功提示。")
+                    append("1. 购票前必须先调用list_passengers获取用户常用乘客列表，只能使用列表中的真实姓名购票，严禁编造乘客姓名。")
+                    append("2. 退票前必须先告知用户退票费金额，获得用户确认后再执行退票。")
+                    append("3. 查询车次后列出关键信息（车次ID、车次号、时间、座位类型、价格和余票数量）。")
+                    append("4. 所有操作成功后给出清晰的成功提示，包含订单ID等信息。")
                     append("5. 使用中文回复，不要使用emoji表情符号。")
                     append("6. 不要使用Markdown语法（如**加粗**、`代码块`、#标题等），纯文本回复。")
                 }
@@ -113,8 +115,10 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
                 while (round < 5) {
                     round++
                     val response = llmClient.chat(config.apiUrl, config.apiKey, config.modelName, llmMessages, tools)
+                    Log.d("TTBS_AI_VM", "round=$round, contentLen=${response.content?.length ?: 0}, toolCalls=${response.toolCalls?.size ?: 0}")
                     if (response.toolCalls != null && response.toolCalls.isNotEmpty()) {
                         for (tc in response.toolCalls) {
+                            Log.d("TTBS_AI_VM", "toolCall: name=${tc.name}, args=${tc.arguments.take(100)}")
                             val status = "[${tc.name}] 执行中..."
                             msgs.add(ChatMessage(false, status))
                             _state.value = _state.value.copy(messages = msgs.toList())
@@ -145,6 +149,7 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
                 msgs.add(ChatMessage(false, "对话轮次超限，请重试"))
                 _state.value = _state.value.copy(messages = msgs.toList(), loading = false)
             } catch (e: Exception) {
+                Log.e("TTBS_AI_VM", "sendMessage error", e)
                 val errMsg = when {
                     e.message?.contains("API error") == true -> e.message!!
                     e.message?.contains("Unable to resolve host") == true -> "网络连接失败，请检查API地址和网络"
