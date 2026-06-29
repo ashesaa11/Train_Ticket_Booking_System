@@ -289,8 +289,8 @@ fun AppNavigation(repos: Repos) {
                 .pointerInput(Unit) {
                     detectDragGesturesAfterLongPress { change, dragAmount ->
                         change.consume()
-                        offsetX += dragAmount.x
-                        offsetY += dragAmount.y
+                        offsetX += dragAmount.x * 0.4f
+                        offsetY += dragAmount.y * 0.4f
                     }
                 },
             containerColor = Color(0xFF1A73E8)

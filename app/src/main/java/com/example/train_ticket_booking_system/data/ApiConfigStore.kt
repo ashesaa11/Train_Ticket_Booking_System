@@ -22,7 +22,7 @@ class ApiConfigStore(private val context: Context) {
         ApiConfig(
             apiUrl = prefs[KEY_API_URL] ?: "https://api.deepseek.com/v1",
             apiKey = prefs[KEY_API_KEY] ?: "",
-            modelName = prefs[KEY_MODEL_NAME] ?: "deepseek-chat"
+            modelName = prefs[KEY_MODEL_NAME] ?: "deepseek-flash"
         )
     }
 
@@ -38,5 +38,5 @@ class ApiConfigStore(private val context: Context) {
 data class ApiConfig(
     val apiUrl: String = "https://api.deepseek.com/v1",
     val apiKey: String = "",
-    val modelName: String = "deepseek-chat"
+    val modelName: String = "deepseek-flash"
 )
