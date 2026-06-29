@@ -278,7 +278,7 @@ fun AppNavigation(repos: Repos) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var offsetX by remember { mutableStateOf(0f) }
-    var offsetY by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(-80f) }
     if (isLoggedIn && currentRoute != Routes.LOGIN && currentRoute != Routes.AI_CHAT) {
         FloatingActionButton(
             onClick = { navController.navigate(Routes.AI_CHAT) },
