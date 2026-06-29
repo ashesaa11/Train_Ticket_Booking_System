@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import androidx.navigation.NavController
 import com.example.train_ticket_booking_system.ui.navigation.Repos
 import kotlinx.coroutines.launch
@@ -103,7 +104,10 @@ fun ProfileScreen(userPhone: String, repos: Repos, navController: NavController)
             SectionTitle("常用功能")
             MenuCard(Icons.Default.Person, "常用乘客", "管理您的常用乘车人") { navController.navigate("passenger_manage") }
             MenuCard(Icons.Default.Lock, "修改支付密码", "更改购票支付的6位密码") { showPwdDialog = true }
-            MenuCard(Icons.Default.Edit, "数据管理", "添加站点和车次信息") { navController.navigate("data_manage") }
+            Log.d("TTBS_PROFILE", "ProfileScreen: userPhone=$userPhone, showDataManage=${userPhone == "13800000000"}")
+            if (userPhone == "13800000000") {
+                MenuCard(Icons.Default.Edit, "数据管理", "添加站点和车次信息") { navController.navigate("data_manage") }
+            }
             MenuCard(Icons.Default.Settings, "AI助手", "智能查询和订票助手") { navController.navigate("ai_chat") }
 
             Spacer(Modifier.height(24.dp))
