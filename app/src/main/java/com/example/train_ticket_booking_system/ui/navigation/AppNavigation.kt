@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -270,18 +273,30 @@ fun AppNavigation(repos: Repos) {
         }
     }
 
-    // AI Floating button - visible on all screens after login
-    if (isLoggedIn && navController.currentDestination?.route != Routes.LOGIN) {
-            FloatingActionButton(
-                onClick = { navController.navigate(Routes.AI_CHAT) },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp),
-                containerColor = Color(0xFF1A73E8)
-            ) {
-                Icon(Icons.Default.SmartToy, "AI助手", tint = Color.White)
-            }
+    // AI Draggable floating button - hides on login and AI chat page
+    val currentRoute = navController.currentDestination?.route
+    if (isLoggedIn && currentRoute != Routes.LOGIN && currentRoute != Routes.AI_CHAT) {
+        var offsetX by remember { mutableStateOf(0f) }
+        var offsetY by remember { mutableStateOf(0f) }
+        val fabSize = 56.dp
+        FloatingActionButton(
+            onClick = { navController.navigate(Routes.AI_CHAT) },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = offsetX.dp, y = offsetY.dp)
+                .padding(24.dp)
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        offsetX += dragAmount.x
+                        offsetY += dragAmount.y
+                    }
+                },
+            containerColor = Color(0xFF1A73E8)
+        ) {
+            Icon(Icons.Default.SmartToy, "AI助手", tint = Color.White)
         }
+    }
     }
 }
 
