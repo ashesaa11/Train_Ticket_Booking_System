@@ -1,10 +1,12 @@
 package com.example.train_ticket_booking_system.data.seed
 
+import android.util.Log
 import com.example.train_ticket_booking_system.data.AppDatabase
 import com.example.train_ticket_booking_system.data.entity.SeatType
 import com.example.train_ticket_booking_system.data.entity.Station
 import com.example.train_ticket_booking_system.data.entity.Train
 import com.example.train_ticket_booking_system.data.entity.TrainStop
+import kotlin.random.Random
 
 object SeedData {
     suspend fun seed(db: AppDatabase) {
@@ -40,101 +42,255 @@ object SeedData {
         )
         db.stationDao().insertAll(stations)
 
-        // Define trains: number, type, depStationId, arrStationId, durationMinutes
-        data class T(val number: String, val type: String, val dep: Long, val arr: Long, val dur: Int)
-        val trainDefs = listOf(
-            // 北京始发
-            T("G1", "G", 1, 4, 268), T("G2", "G", 4, 1, 268),
-            T("G3", "G", 1, 4, 280), T("G4", "G", 4, 1, 280),
-            T("G79", "G", 2, 6, 480), T("G80", "G", 6, 2, 480),
-            T("G101", "G", 1, 11, 210), T("G102", "G", 11, 1, 210),
-            T("D301", "D", 1, 11, 220), T("D302", "D", 11, 1, 220),
-            T("G201", "G", 1, 16, 30), T("G202", "G", 16, 1, 30),
-            T("G301", "G", 1, 17, 110), T("G302", "G", 17, 1, 110),
-            T("K180", "K", 2, 14, 380),
-            T("G401", "G", 1, 18, 250), T("G402", "G", 18, 1, 250),
-            T("D501", "D", 2, 14, 200),
+        // Major hub IDs
+        val hubBeijing = setOf(1L, 2L, 3L)      // 北京南/西/北京
+        val hubShanghai = setOf(4L, 5L)          // 上海虹桥/上海
+        val hubGuangzhou = setOf(6L, 7L)         // 广州南/深圳北
+        val hubWuhan = setOf(8L, 9L)             // 武汉/汉口
+        val hubChengdu = setOf(10L, 21L)         // 成都东/重庆北
+        val hubXian = setOf(13L)                 // 西安北
+        val hubNanjing = setOf(11L, 28L)         // 南京南/合肥南
+        val hubChangsha = setOf(15L, 27L)        // 长沙南/南昌西
+        val hubDongbei = setOf(18L, 19L)         // 沈阳北/哈尔滨西
+        val hubZhengzhou = setOf(14L)            // 郑州东
 
-            // 上海始发
-            T("G100", "G", 4, 6, 420), T("G1010", "G", 6, 4, 420),
-            T("G10", "G", 4, 11, 180), T("G11", "G", 11, 4, 180),
-            T("G20", "G", 4, 12, 60), T("G21", "G", 12, 4, 60),
-            T("K280", "K", 5, 12, 150),
-            T("D201", "D", 4, 17, 240), T("D202", "D", 17, 4, 240),
+        // Route definition: pair of station IDs
+        data class Route(val dep: Long, val arr: Long)
 
-            // 广深始发
-            T("G600", "G", 7, 15, 180), T("G601", "G", 15, 7, 180),
-            T("G610", "G", 6, 7, 30), T("G611", "G", 7, 6, 30),
-            T("G620", "G", 7, 26, 300), T("G621", "G", 26, 7, 300),
-            T("G630", "G", 6, 24, 210), T("G631", "G", 24, 6, 210),
-            T("D701", "D", 7, 23, 200), T("D702", "D", 23, 7, 200),
+        val routes = mutableListOf<Route>()
 
-            // 武汉始发
-            T("G350", "G", 8, 6, 240), T("G351", "G", 6, 8, 240),
-            T("G360", "G", 8, 10, 500), T("G361", "G", 10, 8, 500),
-            T("D801", "D", 8, 15, 120), T("D802", "D", 15, 8, 120),
-            T("G370", "G", 8, 22, 400), T("G371", "G", 22, 8, 400),
-
-            // 蓉渝始发
-            T("G400", "G", 10, 13, 180), T("G401", "G", 13, 10, 180),
-            T("G410", "G", 10, 22, 100), T("G411", "G", 22, 10, 100),
-            T("G420", "G", 21, 10, 400), T("G421", "G", 10, 21, 400),
-            T("D901", "D", 21, 26, 200), T("D902", "D", 26, 21, 200),
-
-            // 其他
-            T("G700", "G", 13, 14, 120), T("G701", "G", 14, 13, 120),
-            T("G710", "G", 13, 9, 240), T("G711", "G", 9, 13, 240),
-            T("D150", "D", 25, 17, 160), T("D151", "D", 17, 25, 160),
-            T("G800", "G", 27, 15, 110), T("G801", "G", 15, 27, 110),
-            T("G900", "G", 28, 11, 80), T("G901", "G", 11, 28, 80),
-            T("D250", "D", 16, 25, 80), T("D251", "D", 25, 16, 80),
-            T("K500", "K", 19, 17, 480), T("K501", "K", 17, 19, 480),
-            T("G500", "G", 5, 28, 180), T("G501", "G", 28, 5, 180),
-            T("G510", "G", 5, 11, 220), T("G511", "G", 11, 5, 220),
-        )
-
-        val trains = trainDefs.map { Train(number = it.number, type = it.type, departureStationId = it.dep, arrivalStationId = it.arr, durationMinutes = it.dur) }
-        db.trainDao().insertAll(trains)
-
-        // Generate stops
-        val allStops = mutableListOf<TrainStop>()
-        trainDefs.forEachIndexed { index, t ->
-            val trainId = index + 1L
-            val depTime = departureTime(index)
-            val depHM = depTime.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
-            val arrTime = arrivalTime(depHM, t.dur)
-            allStops.add(TrainStop(trainId = trainId, stationId = t.dep, stopOrder = 1, arrivalTime = "--", departureTime = depTime, dayOffset = 0))
-            allStops.add(TrainStop(trainId = trainId, stationId = t.arr, stopOrder = 2, arrivalTime = arrTime, departureTime = "--", dayOffset = if(depHM + t.dur >= 1440) 1 else 0))
+        // Connect each hub pair if they have a route
+        fun connect(a: Set<Long>, b: Set<Long>) {
+            for (da in a) for (db in b) routes.add(Route(da, db))
         }
+
+        // Beijing ↔ all hubs
+        connect(hubBeijing, hubShanghai)
+        connect(hubBeijing, hubGuangzhou)
+        connect(hubBeijing, hubWuhan)
+        connect(hubBeijing, hubChengdu)
+        connect(hubBeijing, hubXian)
+        connect(hubBeijing, hubNanjing)
+        connect(hubBeijing, hubChangsha)
+        connect(hubBeijing, hubDongbei)
+        connect(hubBeijing, hubZhengzhou)
+        connect(hubBeijing, setOf(16L))      // 天津
+        connect(hubBeijing, setOf(17L))      // 济南西
+        connect(hubBeijing, setOf(12L))      // 杭州东
+        connect(hubBeijing, setOf(20L))      // 福州南
+        connect(hubBeijing, setOf(22L))      // 昆明南
+        connect(hubBeijing, setOf(23L))      // 厦门北
+        connect(hubBeijing, setOf(25L))      // 青岛北
+        connect(hubBeijing, setOf(26L))      // 贵阳北
+        connect(hubBeijing, setOf(24L))      // 大连北
+
+        // Shanghai ↔ all
+        connect(hubShanghai, hubGuangzhou)
+        connect(hubShanghai, hubWuhan)
+        connect(hubShanghai, hubChengdu)
+        connect(hubShanghai, hubXian)
+        connect(hubShanghai, hubChangsha)
+        connect(hubShanghai, hubDongbei)
+        connect(hubShanghai, hubZhengzhou)
+        connect(hubShanghai, setOf(12L))     // 杭州东
+        connect(hubShanghai, setOf(17L))     // 济南西
+        connect(hubShanghai, setOf(20L))     // 福州南
+        connect(hubShanghai, setOf(22L))     // 昆明南
+        connect(hubShanghai, setOf(23L))     // 厦门北
+        connect(hubShanghai, setOf(25L))     // 青岛北
+        connect(hubShanghai, setOf(26L))     // 贵阳北
+        connect(hubShanghai, setOf(24L))     // 大连北
+        connect(hubShanghai, setOf(16L))     // 天津
+
+        // Guangzhou ↔ all
+        connect(hubGuangzhou, hubWuhan)
+        connect(hubGuangzhou, hubChengdu)
+        connect(hubGuangzhou, hubXian)
+        connect(hubGuangzhou, hubChangsha)
+        connect(hubGuangzhou, hubDongbei)
+        connect(hubGuangzhou, hubZhengzhou)
+        connect(hubGuangzhou, setOf(12L))    // 杭州东
+        connect(hubGuangzhou, setOf(20L))    // 福州南
+        connect(hubGuangzhou, setOf(22L))    // 昆明南
+        connect(hubGuangzhou, setOf(23L))    // 厦门北
+        connect(hubGuangzhou, setOf(26L))    // 贵阳北
+        connect(hubGuangzhou, setOf(11L))    // 南京南
+        connect(hubGuangzhou, setOf(28L))    // 合肥南
+        connect(hubGuangzhou, setOf(17L))    // 济南西
+
+        // Wuhan ↔ rest
+        connect(hubWuhan, hubChengdu)
+        connect(hubWuhan, hubXian)
+        connect(hubWuhan, hubChangsha)
+        connect(hubWuhan, hubDongbei)
+        connect(hubWuhan, setOf(12L))        // 杭州东
+        connect(hubWuhan, setOf(20L))        // 福州南
+        connect(hubWuhan, setOf(22L))        // 昆明南
+        connect(hubWuhan, setOf(23L))        // 厦门北
+        connect(hubWuhan, setOf(26L))        // 贵阳北
+        connect(hubWuhan, setOf(17L))        // 济南西
+        connect(hubWuhan, setOf(25L))        // 青岛北
+
+        // Chengdu ↔ rest
+        connect(hubChengdu, hubXian)
+        connect(hubChengdu, hubChangsha)
+        connect(hubChengdu, hubDongbei)
+        connect(hubChengdu, setOf(12L))      // 杭州东
+        connect(hubChengdu, setOf(20L))      // 福州南
+        connect(hubChengdu, setOf(22L))      // 昆明南
+        connect(hubChengdu, setOf(23L))      // 厦门北
+        connect(hubChengdu, setOf(26L))      // 贵阳北
+        connect(hubChengdu, setOf(17L))      // 济南西
+        connect(hubChengdu, setOf(25L))      // 青岛北
+
+        // Xian ↔ rest
+        connect(hubXian, hubChangsha)
+        connect(hubXian, hubDongbei)
+        connect(hubXian, setOf(12L))         // 杭州东
+        connect(hubXian, setOf(22L))         // 昆明南
+        connect(hubXian, setOf(23L))         // 厦门北
+        connect(hubXian, setOf(26L))         // 贵阳北
+        connect(hubXian, setOf(20L))         // 福州南
+        connect(hubXian, setOf(25L))         // 青岛北
+
+        // Regional
+        connect(setOf(16L), setOf(17L))      // 天津↔济南西
+        connect(setOf(16L), setOf(18L))      // 天津↔沈阳北
+        connect(setOf(16L), setOf(24L))      // 天津↔大连北
+        connect(setOf(17L), setOf(25L))      // 济南西↔青岛北
+        connect(setOf(17L), setOf(18L))      // 济南西↔沈阳北
+        connect(setOf(18L), setOf(19L))      // 沈阳北↔哈尔滨西
+        connect(setOf(18L), setOf(24L))      // 沈阳北↔大连北
+        connect(setOf(12L), setOf(20L))      // 杭州东↔福州南
+        connect(setOf(12L), setOf(23L))      // 杭州东↔厦门北
+        connect(setOf(20L), setOf(23L))      // 福州南↔厦门北
+        connect(setOf(15L), setOf(27L))      // 长沙南↔南昌西
+        connect(setOf(26L), setOf(22L))      // 贵阳北↔昆明南
+        connect(setOf(28L), setOf(11L))      // 合肥南↔南京南
+        connect(setOf(14L), setOf(17L))      // 郑州东↔济南西
+        connect(setOf(14L), setOf(8L))       // 郑州东↔武汉
+        connect(setOf(14L), setOf(13L))      // 郑州东↔西安北
+
+        // Generate trains: 2-3 per route at different times
+        val rng = Random(42)
+        var trainNum = 1
+        val allTrains = mutableListOf<Train>()
+        val allStops = mutableListOf<TrainStop>()
+
+        val typeWeights = listOf("G" to 60, "D" to 25, "K" to 15)
+
+        for (route in routes) {
+            // Determine how many trains for this route (2-3)
+            val dist = routeDistance(route.dep, route.arr)
+            val count = when {
+                dist < 8 -> 2     // short distance: 2 trains
+                dist < 15 -> 2 + rng.nextInt(2)  // medium: 2-3
+                else -> 3          // long distance: 3 trains
+            }
+
+            val timeSlots = when (count) {
+                2 -> listOf(7, 14)       // morning, afternoon
+                else -> listOf(6, 12, 17) // morning, noon, evening
+            }
+
+            for (slot in timeSlots.take(count)) {
+                val type = weightedPick(typeWeights, rng)
+                val dur = (dist * 40 + rng.nextInt(-30, 30)).coerceAtLeast(30)
+                val depHour = slot + rng.nextInt(0, 2)
+                val depMin = rng.nextInt(0, 60)
+                val depTime = "${pad2(depHour)}:${pad2(depMin)}"
+                val arrTotal = depHour * 60 + depMin + dur
+                val arrHour = arrTotal / 60 % 24
+                val arrMin = arrTotal % 60
+                val arrTime = "${pad2(arrHour)}:${pad2(arrMin)}"
+                val dayOff = if (depHour * 60 + depMin + dur >= 1440) 1 else 0
+
+                val prefix = when (type) {
+                    "G" -> "G"
+                    "D" -> "D"
+                    else -> "K"
+                }
+                val number = "$prefix$trainNum"
+                trainNum++
+
+                allTrains.add(Train(
+                    number = number,
+                    type = type,
+                    departureStationId = route.dep,
+                    arrivalStationId = route.arr,
+                    durationMinutes = dur
+                ))
+
+                val trainId = allTrains.size.toLong()
+                allStops.add(TrainStop(trainId = trainId, stationId = route.dep, stopOrder = 1,
+                    arrivalTime = "--", departureTime = depTime, dayOffset = 0))
+                allStops.add(TrainStop(trainId = trainId, stationId = route.arr, stopOrder = 2,
+                    arrivalTime = arrTime, departureTime = "--", dayOffset = dayOff))
+            }
+        }
+
+        db.trainDao().insertAll(allTrains)
         db.trainDao().insertStops(allStops)
 
         // Seat types
         val allSeatTypes = mutableListOf<SeatType>()
-        for (i in 1..trainDefs.size.toLong()) {
-            val def = trainDefs[i.toInt() - 1]
-            when (def.type) {
+        for ((i, train) in allTrains.withIndex()) {
+            val tid = i + 1L
+            val dur = train.durationMinutes
+            when (train.type) {
                 "G" -> {
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "二等座", price = 300 + (def.dur * 0.8).toInt().toDouble(), totalCount = 600))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "一等座", price = 500 + (def.dur * 1.2).toInt().toDouble(), totalCount = 100))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "商务座", price = 900 + (def.dur * 2.0).toInt().toDouble(), totalCount = 28))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "二等座", price = 300 + (dur * 0.8).toInt().toDouble(), totalCount = 600))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "一等座", price = 500 + (dur * 1.2).toInt().toDouble(), totalCount = 100))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "商务座", price = 900 + (dur * 2.0).toInt().toDouble(), totalCount = 28))
                 }
                 "D" -> {
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "二等座", price = 150 + (def.dur * 0.5).toInt().toDouble(), totalCount = 500))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "一等座", price = 250 + (def.dur * 0.8).toInt().toDouble(), totalCount = 80))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "二等座", price = 150 + (dur * 0.5).toInt().toDouble(), totalCount = 500))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "一等座", price = 250 + (dur * 0.8).toInt().toDouble(), totalCount = 80))
                 }
                 "K" -> {
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "硬座", price = 50 + (def.dur * 0.2).toInt().toDouble(), totalCount = 500))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "硬卧上", price = 100 + (def.dur * 0.3).toInt().toDouble(), totalCount = 200))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "硬卧中", price = 110 + (def.dur * 0.3).toInt().toDouble(), totalCount = 200))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "硬卧下", price = 120 + (def.dur * 0.3).toInt().toDouble(), totalCount = 200))
-                    allSeatTypes.add(SeatType(trainId = i, typeName = "软卧", price = 200 + (def.dur * 0.5).toInt().toDouble(), totalCount = 80))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "硬座", price = 50 + (dur * 0.2).toInt().toDouble(), totalCount = 500))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "硬卧上", price = 100 + (dur * 0.3).toInt().toDouble(), totalCount = 200))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "硬卧中", price = 110 + (dur * 0.3).toInt().toDouble(), totalCount = 200))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "硬卧下", price = 120 + (dur * 0.3).toInt().toDouble(), totalCount = 200))
+                    allSeatTypes.add(SeatType(trainId = tid, typeName = "软卧", price = 200 + (dur * 0.5).toInt().toDouble(), totalCount = 80))
                 }
             }
         }
         db.seatTypeDao().insertAll(allSeatTypes)
+        Log.d("TTBS_SEED", "Seeded ${allTrains.size} trains, ${allStops.size} stops, ${allSeatTypes.size} seat types")
     }
 
     private fun pad2(n: Int) = n.toString().padStart(2, '0')
-    private fun departureTime(index: Int): String { val h = 6 + (index * 2 % 16); val m = (index * 17) % 60; return "${pad2(h)}:${pad2(m)}" }
-    private fun arrivalTime(depMin: Int, dur: Int): String { val total = depMin + dur; val h = total / 60 % 24; val m = total % 60; return "${pad2(h)}:${pad2(m)}" }
+
+    // Approximate station index distance (proxy for geographic distance)
+    private fun routeDistance(dep: Long, arr: Long): Int {
+        val position = mapOf(
+            1L to 0, 2L to 0, 3L to 0,     // 北京
+            16L to 1,                        // 天津
+            17L to 3, 25L to 3,             // 济南/青岛
+            14L to 5,                        // 郑州
+            13L to 7,                        // 西安
+            18L to 8, 19L to 12, 24L to 8,  // 东北
+            4L to 10, 5L to 10, 11L to 10, 28L to 10, 12L to 11, // 长三角
+            8L to 12, 9L to 12,             // 武汉
+            20L to 13, 23L to 13,           // 福建
+            10L to 15, 21L to 14,           // 成渝
+            15L to 14, 27L to 14,           // 湘赣
+            26L to 16, 22L to 17,           // 云贵
+            6L to 16, 7L to 16              // 广东
+        )
+        val p1 = position[dep] ?: 10
+        val p2 = position[arr] ?: 10
+        return kotlin.math.abs(p1 - p2) + 2
+    }
+
+    private fun weightedPick(items: List<Pair<String, Int>>, rng: Random): String {
+        val total = items.sumOf { it.second }
+        var pick = rng.nextInt(total)
+        for ((name, weight) in items) {
+            pick -= weight
+            if (pick < 0) return name
+        }
+        return items.first().first
+    }
 }
