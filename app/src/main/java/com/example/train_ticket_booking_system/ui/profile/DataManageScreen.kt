@@ -30,8 +30,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,6 +72,8 @@ fun DataManageScreen(repos: Repos, navController: NavController) {
     var arrExpanded by remember { mutableStateOf(false) }
     var depTime by remember { mutableStateOf("") }
     var arrTime by remember { mutableStateOf("") }
+    var showDepTimePicker by remember { mutableStateOf(false) }
+    var showArrTimePicker by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf(DateTimeUtil.todayStr()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var stationError by remember { mutableStateOf<String?>(null) }
@@ -170,8 +175,63 @@ fun DataManageScreen(repos: Repos, navController: NavController) {
                 ) { DatePicker(state = dpState) }
             }
 
-            OutlinedTextField(depTime, { depTime = it; trainError = null }, label = { Text("出发时间(如: 08:30)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(arrTime, { arrTime = it; trainError = null }, label = { Text("到达时间(如: 12:50)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            // Departure time
+            Box(modifier = Modifier.fillMaxWidth().clickable { showDepTimePicker = true }) {
+                OutlinedTextField(
+                    value = depTime.ifEmpty { "点击选择出发时间" },
+                    onValueChange = {}, readOnly = true,
+                    label = { Text("出发时间") },
+                    leadingIcon = { Icon(Icons.Default.DateRange, null, tint = Color(0xFF5F6368)) },
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), enabled = false
+                )
+            }
+            if (showDepTimePicker) {
+                val tpState = rememberTimePickerState(
+                    initialHour = depTime.takeIf { it.isNotBlank() }?.split(":")?.get(0)?.toInt() ?: 8,
+                    initialMinute = depTime.takeIf { it.isNotBlank() }?.split(":")?.get(1)?.toInt() ?: 0,
+                    is24Hour = true
+                )
+                TimePickerDialog(
+                    onDismissRequest = { showDepTimePicker = false },
+                    title = { Text("出发时间") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            depTime = "${tpState.hour.toString().padStart(2, '0')}:${tpState.minute.toString().padStart(2, '0')}"
+                            showDepTimePicker = false
+                        }) { Text("确定") }
+                    },
+                    dismissButton = { TextButton(onClick = { showDepTimePicker = false }) { Text("取消") } }
+                ) { TimePicker(state = tpState) }
+            }
+
+            // Arrival time
+            Box(modifier = Modifier.fillMaxWidth().clickable { showArrTimePicker = true }) {
+                OutlinedTextField(
+                    value = arrTime.ifEmpty { "点击选择到达时间" },
+                    onValueChange = {}, readOnly = true,
+                    label = { Text("到达时间") },
+                    leadingIcon = { Icon(Icons.Default.DateRange, null, tint = Color(0xFF5F6368)) },
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), enabled = false
+                )
+            }
+            if (showArrTimePicker) {
+                val tpState = rememberTimePickerState(
+                    initialHour = arrTime.takeIf { it.isNotBlank() }?.split(":")?.get(0)?.toInt() ?: 12,
+                    initialMinute = arrTime.takeIf { it.isNotBlank() }?.split(":")?.get(1)?.toInt() ?: 0,
+                    is24Hour = true
+                )
+                TimePickerDialog(
+                    onDismissRequest = { showArrTimePicker = false },
+                    title = { Text("到达时间") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            arrTime = "${tpState.hour.toString().padStart(2, '0')}:${tpState.minute.toString().padStart(2, '0')}"
+                            showArrTimePicker = false
+                        }) { Text("确定") }
+                    },
+                    dismissButton = { TextButton(onClick = { showArrTimePicker = false }) { Text("取消") } }
+                ) { TimePicker(state = tpState) }
+            }
 
             trainError?.let { Text(it, color = Color(0xFFEA4335), style = MaterialTheme.typography.bodySmall) }
 
