@@ -13,21 +13,8 @@ data class TrainWithStops(
 class TrainRepository(private val dao: TrainDao) {
     suspend fun search(fromStationId: Long, toStationId: Long, date: String): List<TrainWithStops> {
         val allTrains = dao.searchTrains(fromStationId, toStationId)
-        val targetCount = 8
-        val result: List<Train>
-        if (allTrains.size <= targetCount) {
-            result = allTrains
-        } else {
-            val dateSeed = Math.abs(date.hashCode().toLong())
-            val startIndex = (dateSeed % allTrains.size).toInt()
-            val selected = mutableListOf<Train>()
-            for (i in 0 until targetCount) {
-                selected.add(allTrains[(startIndex + i) % allTrains.size])
-            }
-            result = selected
-        }
-        Log.d("TTBS_TRAIN", "search: from=$fromStationId to=$toStationId date=$date, all=${allTrains.size}, result=${result.size}")
-        return result.map { TrainWithStops(it, dao.getStops(it.id)) }
+        Log.d("TTBS_TRAIN", "search: from=$fromStationId to=$toStationId date=$date, found=${allTrains.size}")
+        return allTrains.map { TrainWithStops(it, dao.getStops(it.id)) }
     }
 
     suspend fun getById(id: Long): Train? = dao.getById(id)
