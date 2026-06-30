@@ -10,7 +10,7 @@ import com.example.train_ticket_booking_system.data.entity.TrainStop
 @Dao
 interface TrainDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(trains: List<Train>)
+    suspend fun insertAll(trains: List<Train>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStops(stops: List<TrainStop>)

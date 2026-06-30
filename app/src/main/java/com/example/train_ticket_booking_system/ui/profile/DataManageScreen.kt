@@ -251,7 +251,9 @@ fun DataManageScreen(repos: Repos, navController: NavController) {
                             val arrTotal = parseTime(arrTime)
                             if (arrTotal <= depTotal) { trainError = "到达时间必须晚于出发时间"; return@launch }
                             val dur = arrTotal - depTotal
-                            repos.trainRepo.insert(Train(number = trainNumber, type = trainType, departureStationId = depStation!!.id, arrivalStationId = arrStation!!.id, durationMinutes = dur))
+                            val trainId = repos.trainRepo.insert(Train(number = trainNumber, type = trainType, departureStationId = depStation!!.id, arrivalStationId = arrStation!!.id, durationMinutes = dur))
+                            repos.trainRepo.insertStop(TrainStop(trainId = trainId, stationId = depStation!!.id, stopOrder = 1, arrivalTime = "--", departureTime = depTime, dayOffset = 0))
+                            repos.trainRepo.insertStop(TrainStop(trainId = trainId, stationId = arrStation!!.id, stopOrder = 2, arrivalTime = arrTime, departureTime = "--", dayOffset = 0))
                             Toast.makeText(context, "车次已添加（历时${dur}分钟）", Toast.LENGTH_SHORT).show()
                             trainNumber = ""; trainType = ""; depStation = null; arrStation = null; depTime = ""; arrTime = ""; trainError = null
                         } catch (e: Exception) {
