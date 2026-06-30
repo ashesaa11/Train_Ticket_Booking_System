@@ -13,23 +13,21 @@ data class TrainWithStops(
 class TrainRepository(private val dao: TrainDao) {
     suspend fun search(fromStationId: Long, toStationId: Long, date: String): List<TrainWithStops> {
         val allTrains = dao.searchTrains(fromStationId, toStationId)
-        val filtered = allTrains.filter { train -> isTrainAvailableOnDate(train.id, date) }
-        Log.d("TTBS_TRAIN", "search: from=$fromStationId to=$toStationId date=$date, all=${allTrains.size}, available=${filtered.size}")
-
-        val result = if (filtered.size < 3 && allTrains.isNotEmpty()) {
-            // 确保每天至少3趟车
-            val forced = allTrains.take(minOf(3, allTrains.size))
-            forced.map { TrainWithStops(it, dao.getStops(it.id)) }
+        val targetCount = 8
+        val result: List<Train>
+        if (allTrains.size <= targetCount) {
+            result = allTrains
         } else {
-            filtered.map { TrainWithStops(it, dao.getStops(it.id)) }
+            val dateSeed = Math.abs(date.hashCode().toLong())
+            val startIndex = (dateSeed % allTrains.size).toInt()
+            val selected = mutableListOf<Train>()
+            for (i in 0 until targetCount) {
+                selected.add(allTrains[(startIndex + i) % allTrains.size])
+            }
+            result = selected
         }
-        Log.d("TTBS_TRAIN", "search result: ${result.size} trains")
-        return result
-    }
-
-    private fun isTrainAvailableOnDate(trainId: Long, date: String): Boolean {
-        val seed = "$trainId-$date"
-        return Math.abs(seed.hashCode().toLong()) % 100 < 70
+        Log.d("TTBS_TRAIN", "search: from=$fromStationId to=$toStationId date=$date, all=${allTrains.size}, result=${result.size}")
+        return result.map { TrainWithStops(it, dao.getStops(it.id)) }
     }
 
     suspend fun getById(id: Long): Train? = dao.getById(id)

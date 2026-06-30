@@ -76,4 +76,11 @@ class OrderRepository(
 
     suspend fun getItemsByOrderId(orderId: Long): List<OrderItem> =
         orderDao.getItemsByOrderId(orderId)
+
+    suspend fun autoUpdateExpiredOrders(today: String) {
+        val expired = orderDao.getExpiredOrders(today)
+        if (expired.isNotEmpty()) {
+            orderDao.batchUpdateStatus(expired.map { it.id })
+        }
+    }
 }

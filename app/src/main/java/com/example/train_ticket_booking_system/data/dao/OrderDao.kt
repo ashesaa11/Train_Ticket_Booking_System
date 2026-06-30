@@ -30,6 +30,12 @@ interface OrderDao {
     @Query("UPDATE train_order SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: Long, status: String)
 
+    @Query("SELECT * FROM train_order WHERE status = '未出行' AND departureDate < :today")
+    suspend fun getExpiredOrders(today: String): List<TrainOrder>
+
+    @Query("UPDATE train_order SET status = '已出行' WHERE id in (:ids)")
+    suspend fun batchUpdateStatus(ids: List<Long>)
+
     @Query("SELECT * FROM train_order WHERE id = :id")
     suspend fun getOrderById(id: Long): TrainOrder?
 

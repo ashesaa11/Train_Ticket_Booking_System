@@ -54,7 +54,10 @@ fun OrderDetailScreen(orderId: Long, orderRepo: OrderRepository, onBack: () -> U
     var refundAmount by remember { mutableStateOf(0.0) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(orderId) { orderWithItems = orderRepo.getOrderWithItems(orderId) }
+    LaunchedEffect(orderId) {
+        orderRepo.autoUpdateExpiredOrders(DateTimeUtil.todayStr())
+        orderWithItems = orderRepo.getOrderWithItems(orderId)
+    }
     LaunchedEffect(orderWithItems) {
         val o = orderWithItems?.order ?: return@LaunchedEffect
         if (o.status == "未出行") refundAmount = PriceCalculator.calcRefundAmount(o.totalPrice, DateTimeUtil.hoursUntilDeparture(o.departureDate, o.departureTime))

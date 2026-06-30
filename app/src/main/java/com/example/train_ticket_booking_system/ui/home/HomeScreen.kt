@@ -47,9 +47,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.ui.unit.sp
 import com.example.train_ticket_booking_system.data.entity.Station
 import com.example.train_ticket_booking_system.ui.navigation.Repos
@@ -77,6 +79,7 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
     var toSearch by remember { mutableStateOf("") }
     var reachableIds by remember { mutableStateOf<List<Long>>(emptyList()) }
     var showError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         stations = repos.stationRepo.getAll()
@@ -87,7 +90,9 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
         if (fromStation!!.id == toStation!!.id) { showError = "出发站和到达站不能相同"; return }
         if (DateTimeUtil.parseDate(selectedDate).isBefore(LocalDate.now())) { showError = "出发日期不能早于今天"; return }
         val maxDate = LocalDate.now().plusDays(14)
-        if (DateTimeUtil.parseDate(selectedDate).isAfter(maxDate)) { showError = "仅支持查询15天内的车次"; return }
+        if (DateTimeUtil.parseDate(selectedDate).isAfter(maxDate)) {
+            Toast.makeText(context, "目前仅保证15天内车次信息准确", Toast.LENGTH_LONG).show()
+        }
         Log.d("TTBS_HOME", "doSearch: ${fromStation!!.name}(${fromStation!!.id}) -> ${toStation!!.name}(${toStation!!.id}), date=$selectedDate")
         showError = null
         onNavigate("train_list/${fromStation!!.id}/${toStation!!.id}/$selectedDate")
@@ -190,14 +195,13 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
                 )
                 if (showDatePicker) {
                     val todayEpoch = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    val maxEpoch = LocalDate.now().plusDays(14).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val datePickerState = rememberDatePickerState(
                         initialSelectedDateMillis = DateTimeUtil.parseDate(selectedDate)
                             .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
                         selectableDates = object : SelectableDates {
                             override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                                utcTimeMillis in todayEpoch..maxEpoch
-                            override fun isSelectableYear(year: Int): Boolean = year == LocalDate.now().year
+                                utcTimeMillis >= todayEpoch
+                            override fun isSelectableYear(year: Int): Boolean = true
                         }
                     )
                     DatePickerDialog(

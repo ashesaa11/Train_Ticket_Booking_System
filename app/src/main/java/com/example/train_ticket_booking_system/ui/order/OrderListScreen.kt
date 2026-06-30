@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.train_ticket_booking_system.data.entity.TrainOrder
 import com.example.train_ticket_booking_system.ui.navigation.Repos
+import com.example.train_ticket_booking_system.util.DateTimeUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +55,10 @@ fun OrderListScreen(repos: Repos, userPhone: String, navController: NavControlle
     val tabs = listOf("全部", "未出行", "已出行", "已退票")
     val statuses = listOf(null, "未出行", "已出行", "已退票")
 
-    LaunchedEffect(userPhone) { orders = repos.orderRepo.getOrdersByUser(userPhone) }
+    LaunchedEffect(userPhone) {
+        repos.orderRepo.autoUpdateExpiredOrders(DateTimeUtil.todayStr())
+        orders = repos.orderRepo.getOrdersByUser(userPhone)
+    }
 
     Scaffold(
         topBar = {
