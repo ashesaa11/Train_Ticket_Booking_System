@@ -2,6 +2,7 @@ package com.example.train_ticket_booking_system.ui.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -184,15 +185,18 @@ fun HomeScreen(repos: Repos, onNavigate: (String) -> Unit) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Date
-                OutlinedTextField(
-                    value = selectedDate,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("出发日期") },
-                    leadingIcon = { Icon(Icons.Default.DateRange, null, tint = Color(0xFF5F6368)) },
-                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-                    shape = RoundedCornerShape(12.dp)
-                )
+                Box(modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true }) {
+                    OutlinedTextField(
+                        value = selectedDate,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("出发日期") },
+                        leadingIcon = { Icon(Icons.Default.DateRange, null, tint = Color(0xFF5F6368)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = false
+                    )
+                }
                 if (showDatePicker) {
                     val todayEpoch = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val datePickerState = rememberDatePickerState(
