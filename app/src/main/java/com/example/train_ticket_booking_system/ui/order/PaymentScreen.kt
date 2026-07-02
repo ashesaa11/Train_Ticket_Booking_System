@@ -1,5 +1,6 @@
 package com.example.train_ticket_booking_system.ui.order
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,7 +55,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val INACTIVITY_TIMEOUT_MS = 60_000L
 
 data class PaymentState(val processing: Boolean = false, val success: Boolean = false, val orderId: Long? = null, val error: String? = null)
 
@@ -88,6 +92,7 @@ fun PaymentScreen(
     onSuccess: (Long) -> Unit
 ) {
     var digits by remember { mutableStateOf(List(6) { "" }) }
+    var inactivityResetKey by remember { mutableStateOf(0) }
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val totalPrice = seatPrice * passengers.size
@@ -96,6 +101,16 @@ fun PaymentScreen(
         if (state.success) {
             Toast.makeText(context, "支付成功!", Toast.LENGTH_SHORT).show()
             state.orderId?.let(onSuccess)
+        }
+    }
+
+    LaunchedEffect(inactivityResetKey) {
+        Log.d("TTBS_TIMEOUT", "计时启动 resetKey=$inactivityResetKey")
+        delay(INACTIVITY_TIMEOUT_MS)
+        if (!state.success) {
+            Log.d("TTBS_TIMEOUT", "超时触发，自动取消")
+            Toast.makeText(context, "支付超时，已自动取消，请重新支付", Toast.LENGTH_LONG).show()
+            onBack()
         }
     }
 
@@ -152,6 +167,8 @@ fun PaymentScreen(
                     onValueChange = { v ->
                         if (v.length <= 6 && v.all { it.isDigit() }) {
                             digits = List(6) { if (it < v.length) v[it].toString() else "" }
+                            inactivityResetKey++
+                            Log.d("TTBS_TIMEOUT", "数字输入重置")
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
